@@ -15,15 +15,16 @@ let history = [];
 let artists = [];
 let songs = [];
 
-async function loadData() {
-  const [historyRes, artistsRes, songsRes] = await Promise.all([
-    fetch('data/history.json'),
-    fetch('data/artists.json'),
-    fetch('data/songs.json')
-  ]);
-  history = (await historyRes.json()).entries || [];
-  artists = await artistsRes.json();
-  songs = await songsRes.json();
+function resolveUrl(path) {
+  return new URL(path, window.location.href).href;
+}
+
+function stripFrontmatter(md) {
+  if (md.startsWith('---')) {
+    const end = md.indexOf('---', 3);
+    if (end !== -1) return md.slice(end + 3).trim();
+  }
+  return md;
 }
 
 function formatDate(dateStr) {
@@ -35,28 +36,34 @@ function getTodayStr() {
   return new Date().toISOString().slice(0, 10);
 }
 
+async function loadData() {
+  const [historyRes, artistsRes, songsRes] = await Promise.all([
+    fetch(resolveUrl('data/history.json')),
+    fetch(resolveUrl('data/artists.json')),
+    fetch(resolveUrl('data/songs.json'))
+  ]);
+  history = (await historyRes.json()).entries || [];
+  artists = await artistsRes.json();
+  songs = await songsRes.json();
+}
+
 function renderStats() {
   const uniqueArtists = new Set(history.map(e => e.artist)).size;
   document.getElementById('stats').innerHTML = `
-    <div><span class="stat-value">${history.length}</span>已学习</div>
-    <div><span class="stat-value">${uniqueArtists}</span>位艺人</div>
-    <div><span class="stat-value">${songs.length}</span>首曲库</div>
+    <span>${history.length} 已学</span>
+    <span>${uniqueArtists} 艺人</span>
+    <span>${songs.length} 曲库</span>
   `;
 }
 
 function renderToday() {
   const today = getTodayStr();
-  const todayEntry = history.find(e => e.date === today)
-    || history.sort((a, b) => b.date.localeCompare(a.date))[0];
-
+  const sorted = [...history].sort((a, b) => b.date.localeCompare(a.date));
+  const todayEntry = history.find(e => e.date === today) || sorted[0];
   const container = document.getElementById('today-card');
 
   if (!todayEntry) {
-    container.innerHTML = `
-      <div class="hero-card empty">
-        <p>还没有学习记录</p>
-        <p>自动化将在每天早上 8:00 推送今日歌曲</p>
-      </div>`;
+    container.innerHTML = `<p class="empty-state">还没有学习记录</p>`;
     return;
   }
 
@@ -64,19 +71,22 @@ function renderToday() {
   const songMeta = songs.find(s => s.slug === todayEntry.slug) || {};
 
   container.innerHTML = `
-    <div class="hero-card">
-      <div class="hero-artist">${todayEntry.artistName || ARTIST_NAMES[todayEntry.artist] || todayEntry.artist}</div>
-      <div class="hero-title">${todayEntry.title}</div>
-      <div class="hero-date">${isToday ? '今日 · ' : ''}${formatDate(todayEntry.date)}</div>
-      <div class="hero-tags">
-        ${songMeta.difficulty ? `<span class="tag">难度: ${songMeta.difficulty}</span>` : ''}
-        ${songMeta.bpm ? `<span class="tag">节奏: ${songMeta.bpm}</span>` : ''}
-        <span class="tag">Alternative R&B</span>
-      </div>
-      <button class="btn-primary" onclick="openEntry('${todayEntry.file}')">
-        开始学习 →
+    <div class="today-card">
+      <p class="today-artist">${todayEntry.artistName || ARTIST_NAMES[todayEntry.artist] || todayEntry.artist}</p>
+      <h3 class="today-title">${todayEntry.title}</h3>
+      <p class="today-date">${isToday ? '今日 · ' : ''}${formatDate(todayEntry.date)}</p>
+      <p class="today-tags">
+        ${songMeta.difficulty ? `<span>${songMeta.difficulty}</span>` : ''}
+        ${songMeta.bpm ? `<span>${songMeta.bpm}</span>` : ''}
+      </p>
+      <button class="btn-primary" type="button" data-file="${todayEntry.file}">
+        开始学习
       </button>
     </div>`;
+
+  container.querySelector('.btn-primary').addEventListener('click', () => {
+    openEntry(todayEntry.file);
+  });
 }
 
 function populateArtistFilter() {
@@ -93,9 +103,7 @@ function renderHistory(filterArtist = '', searchQuery = '') {
   const grid = document.getElementById('history-grid');
   let filtered = [...history].sort((a, b) => b.date.localeCompare(a.date));
 
-  if (filterArtist) {
-    filtered = filtered.filter(e => e.artist === filterArtist);
-  }
+  if (filterArtist) filtered = filtered.filter(e => e.artist === filterArtist);
   if (searchQuery) {
     const q = searchQuery.toLowerCase();
     filtered = filtered.filter(e =>
@@ -105,69 +113,102 @@ function renderHistory(filterArtist = '', searchQuery = '') {
   }
 
   if (filtered.length === 0) {
-    grid.innerHTML = `<div class="empty-state"><p>暂无匹配记录</p></div>`;
+    grid.innerHTML = `<p class="empty-state">暂无匹配记录</p>`;
     return;
   }
 
-  grid.innerHTML = filtered.map(entry => {
-    const songMeta = songs.find(s => s.slug === entry.slug) || {};
-    return `
-      <div class="history-card" onclick="openEntry('${entry.file}')">
-        <div class="card-date">${formatDate(entry.date)}</div>
-        <div class="card-artist">${entry.artistName || ARTIST_NAMES[entry.artist] || entry.artist}</div>
-        <div class="card-title">${entry.title}</div>
-        <div class="card-tags">
-          ${songMeta.difficulty ? `<span class="tag">${songMeta.difficulty}</span>` : ''}
-          ${songMeta.bpm ? `<span class="tag">${songMeta.bpm}</span>` : ''}
-        </div>
-      </div>`;
-  }).join('');
+  grid.innerHTML = filtered.map(entry => `
+    <button class="history-item" type="button" data-file="${entry.file}">
+      <span class="history-date">${formatDate(entry.date)}</span>
+      <span class="history-artist">${entry.artistName || ARTIST_NAMES[entry.artist] || entry.artist}</span>
+      <span class="history-title">${entry.title}</span>
+    </button>
+  `).join('');
+
+  grid.querySelectorAll('.history-item').forEach(btn => {
+    btn.addEventListener('click', () => openEntry(btn.dataset.file));
+  });
+}
+
+function enhanceMarkdown(html) {
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = html;
+
+  wrapper.querySelectorAll('blockquote').forEach(bq => {
+    const text = bq.innerHTML;
+    if (text.includes('**答案**')) {
+      bq.classList.add('quiz');
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'quiz-toggle';
+      btn.textContent = '显示答案';
+      btn.addEventListener('click', () => {
+        bq.classList.toggle('revealed');
+        btn.textContent = bq.classList.contains('revealed') ? '隐藏答案' : '显示答案';
+      });
+      bq.prepend(btn);
+    }
+  });
+
+  wrapper.querySelectorAll('p').forEach(p => {
+    if (p.innerHTML.startsWith('<strong>▸ 原句</strong>')) {
+      const card = document.createElement('div');
+      card.className = 'lyric-card';
+      card.innerHTML = p.innerHTML;
+      p.replaceWith(card);
+    }
+  });
+
+  return wrapper.innerHTML;
+}
+
+function showHome() {
+  document.getElementById('home-view').classList.remove('hidden');
+  document.getElementById('lesson-view').classList.add('hidden');
+  document.getElementById('lesson-view').setAttribute('aria-hidden', 'true');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showLesson() {
+  document.getElementById('home-view').classList.add('hidden');
+  document.getElementById('lesson-view').classList.remove('hidden');
+  document.getElementById('lesson-view').setAttribute('aria-hidden', 'false');
+  window.scrollTo({ top: 0 });
 }
 
 async function openEntry(filePath) {
-  const panel = document.getElementById('reader-panel');
-  const overlay = document.getElementById('overlay');
-  const body = document.getElementById('reader-body');
-  const meta = document.getElementById('reader-meta');
-
   const entry = history.find(e => e.file === filePath);
+  const meta = document.getElementById('lesson-meta');
+  const body = document.getElementById('lesson-body');
+
   if (entry) {
     meta.innerHTML = `
       <h2>${entry.title}</h2>
       <p>${entry.artistName || ARTIST_NAMES[entry.artist]} · ${formatDate(entry.date)}</p>`;
+  } else {
+    meta.innerHTML = '';
   }
 
-  body.innerHTML = '<div class="loading">加载内容…</div>';
-  panel.classList.add('open');
-  overlay.classList.add('open');
-  panel.setAttribute('aria-hidden', 'false');
+  body.innerHTML = '<p class="loading">加载内容…</p>';
+  showLesson();
 
   try {
-    const res = await fetch(filePath);
-    const md = await res.text();
-    body.innerHTML = marked.parse(md);
-  } catch {
-    body.innerHTML = '<p class="empty-state">内容加载失败，请稍后重试。</p>';
+    const res = await fetch(resolveUrl(filePath));
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const md = stripFrontmatter(await res.text());
+    if (typeof marked === 'undefined') throw new Error('marked not loaded');
+    body.innerHTML = enhanceMarkdown(marked.parse(md));
+  } catch (err) {
+    body.innerHTML = `<p class="error-state">内容加载失败（${err.message}），请刷新后重试。</p>`;
   }
 }
 
-function closeReader() {
-  document.getElementById('reader-panel').classList.remove('open');
-  document.getElementById('overlay').classList.remove('open');
-  document.getElementById('reader-panel').setAttribute('aria-hidden', 'true');
-}
-
-document.getElementById('close-reader').addEventListener('click', closeReader);
-document.getElementById('overlay').addEventListener('click', closeReader);
+document.getElementById('back-btn').addEventListener('click', showHome);
 document.getElementById('artist-filter').addEventListener('change', e => {
   renderHistory(e.target.value, document.getElementById('search-input').value);
 });
 document.getElementById('search-input').addEventListener('input', e => {
   renderHistory(document.getElementById('artist-filter').value, e.target.value);
-});
-
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeReader();
 });
 
 async function init() {
@@ -176,6 +217,12 @@ async function init() {
   renderToday();
   populateArtistFilter();
   renderHistory();
+
+  const today = getTodayStr();
+  const todayEntry = history.find(e => e.date === today);
+  if (todayEntry && window.location.hash === '#today') {
+    openEntry(todayEntry.file);
+  }
 }
 
 init();

@@ -19,7 +19,7 @@
 ## Step 3: 写入文件
 
 1. 获取今天日期（格式 `YYYY-MM-DD`）
-2. 创建文件 `entries/{date}-{slug}.md`（如 `entries/2026-06-14-frank-ocean-pink-white.md`）
+2. 创建文件 `assets/lessons/{date}-{slug}.md`（如 `assets/lessons/2026-06-14-frank-ocean-pink-white.md`）
 3. 文件开头添加 front matter 注释：
 
 ```markdown
@@ -41,14 +41,14 @@ slug: frank-ocean-pink-white
   "artistName": "Frank Ocean",
   "title": "Pink + White",
   "slug": "frank-ocean-pink-white",
-  "file": "entries/2026-06-14-frank-ocean-pink-white.md"
+  "file": "assets/lessons/2026-06-14-frank-ocean-pink-white.md"
 }
 ```
 
 ## Step 4: 提交并推送
 
 ```bash
-git add entries/ data/history.json
+git add assets/lessons/ data/history.json
 git commit -m "Daily: {artistName} - {title} ({date})"
 git push origin main
 ```

@@ -62,7 +62,7 @@ daily-lyric-learning/
 │   ├── artists.json        # 10 位艺人信息
 │   ├── songs.json          # 50 首歌曲曲库
 │   └── history.json        # 学习历史索引
-├── entries/                # 每日生成的 Markdown 精讲
+├── assets/lessons/         # 每日生成的 Markdown 精讲
 ├── prompts/
 │   ├── lyric-learning-prompt.md
 │   └── automation-instructions.md

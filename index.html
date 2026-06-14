@@ -6,62 +6,54 @@
   <title>Daily Lyric Learning · 每日英文歌词学习</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-  <div class="grain"></div>
-
   <header class="site-header">
     <div class="header-inner">
-      <div class="logo">
-        <span class="logo-icon">♪</span>
-        <div>
-          <h1>Daily Lyric Learning</h1>
-          <p class="tagline">从 Alternative R&B 歌词学英文</p>
-        </div>
-      </div>
+      <h1>Daily Lyric Learning</h1>
+      <p class="tagline">从 Alternative R&B 歌词学英文</p>
       <nav class="header-stats" id="stats"></nav>
     </div>
   </header>
 
   <main class="container">
-    <section class="hero" id="hero">
-      <div class="hero-badge">今日推荐</div>
-      <div class="hero-content" id="today-card">
-        <div class="loading">加载中…</div>
-      </div>
+    <section id="home-view">
+      <section class="hero" id="hero">
+        <h2 class="section-label">今日推荐</h2>
+        <div id="today-card">
+          <div class="loading">加载中…</div>
+        </div>
+      </section>
+
+      <section class="filters">
+        <div class="filter-group">
+          <label for="artist-filter">艺人</label>
+          <select id="artist-filter">
+            <option value="">全部</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="search-input">搜索</label>
+          <input type="search" id="search-input" placeholder="歌曲或艺人">
+        </div>
+      </section>
+
+      <section class="history-section">
+        <h2 class="section-label">学习历史</h2>
+        <div class="history-list" id="history-grid">
+          <div class="loading">加载历史记录…</div>
+        </div>
+      </section>
     </section>
 
-    <section class="filters">
-      <div class="filter-group">
-        <label for="artist-filter">艺人筛选</label>
-        <select id="artist-filter">
-          <option value="">全部艺人</option>
-        </select>
-      </div>
-      <div class="filter-group">
-        <label for="search-input">搜索歌曲</label>
-        <input type="search" id="search-input" placeholder="输入歌曲名或艺人…">
-      </div>
-    </section>
-
-    <section class="history-section">
-      <h2>学习历史</h2>
-      <div class="history-grid" id="history-grid">
-        <div class="loading">加载历史记录…</div>
-      </div>
+    <section id="lesson-view" class="lesson-view hidden" aria-hidden="true">
+      <button class="btn-back" id="back-btn" type="button">← 返回列表</button>
+      <header class="lesson-header" id="lesson-meta"></header>
+      <article class="lesson-body markdown-body" id="lesson-body"></article>
     </section>
   </main>
-
-  <aside class="reader-panel" id="reader-panel" aria-hidden="true">
-    <div class="reader-header">
-      <button class="close-btn" id="close-reader" aria-label="关闭">×</button>
-      <div class="reader-meta" id="reader-meta"></div>
-    </div>
-    <article class="reader-body markdown-body" id="reader-body"></article>
-  </aside>
-  <div class="overlay" id="overlay"></div>
 
   <footer class="site-footer">
     <p>10 位 Alternative R&B 艺人 · 每日一首 · 逐句精讲</p>
