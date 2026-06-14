@@ -1,0 +1,72 @@
+[
+  {
+    "id": "dvsn",
+    "name": "dvsn",
+    "style": "Alternative R&B",
+    "voice": "假声质感极佳，氛围空灵深情",
+    "language": "咬字极其清晰，语速舒缓，情感叙事为主"
+  },
+  {
+    "id": "6lack",
+    "name": "6LACK",
+    "style": "Alternative R&B + Hip-Hop",
+    "voice": "低沉克制，阴郁深情",
+    "language": "语速偏慢、咬字稳准，对话式表达"
+  },
+  {
+    "id": "bryson-tiller",
+    "name": "Bryson Tiller",
+    "style": "Trap Soul",
+    "voice": "Hip-Hop 节拍 + R&B 旋律，叙事感强",
+    "language": "对话式歌词，节奏中等，日常交流感"
+  },
+  {
+    "id": "frank-ocean",
+    "name": "Frank Ocean",
+    "style": "Alternative R&B",
+    "voice": "风格多变，概念性极强",
+    "language": "诗歌级英文，咬字清晰，高级句型"
+  },
+  {
+    "id": "daniel-caesar",
+    "name": "Daniel Caesar",
+    "style": "Alternative R&B + Soul",
+    "voice": "温暖纯净，情感深邃",
+    "language": "发音标准，语速适中，富有哲理"
+  },
+  {
+    "id": "her",
+    "name": "H.E.R.",
+    "style": "Alternative R&B",
+    "voice": "声线柔滑饱满，吉他驱动",
+    "language": "发音极为清晰，生活化又优雅"
+  },
+  {
+    "id": "gallant",
+    "name": "Gallant",
+    "style": "Alternative R&B",
+    "voice": "假声为主，情绪如声音电影",
+    "language": "咬字如朗诵，歌词密度高"
+  },
+  {
+    "id": "emotional-oranges",
+    "name": "Emotional Oranges",
+    "style": "Alternative R&B + Funk",
+    "voice": "男女双主唱，律动感强",
+    "language": "如日常对话，发音清晰"
+  },
+  {
+    "id": "jhene-aiko",
+    "name": "Jhené Aiko",
+    "style": "Ethereal Alternative R&B",
+    "voice": "轻柔梦幻，如耳边低语",
+    "language": "语速极慢，语气与停顿值得模仿"
+  },
+  {
+    "id": "sampha",
+    "name": "Sampha",
+    "style": "British R&B / Soul",
+    "voice": "脆弱感与破碎美，钢琴驱动",
+    "language": "英式发音，歌词诗意，语速中等"
+  }
+]
