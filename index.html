@@ -3,68 +3,121 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="从 Alternative R&B 歌词学地道英文 — 每日逐句精讲">
+  <meta name="theme-color" content="#07070c">
   <title>Daily Lyric Learning · 每日英文歌词学习</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-  <div class="grain"></div>
+  <div class="ambient" aria-hidden="true">
+    <div class="ambient-orb ambient-orb--1"></div>
+    <div class="ambient-orb ambient-orb--2"></div>
+    <div class="ambient-orb ambient-orb--3"></div>
+  </div>
 
   <header class="site-header">
     <div class="header-inner">
-      <div class="logo">
-        <span class="logo-icon">♪</span>
-        <div>
-          <h1>Daily Lyric Learning</h1>
-          <p class="tagline">从 Alternative R&B 歌词学英文</p>
+      <a class="logo" href="./">
+        <span class="logo-mark">♪</span>
+        <div class="logo-text">
+          <span class="logo-title">Daily Lyric Learning</span>
+          <span class="logo-sub">Alternative R&B · 逐句精讲</span>
+        </div>
+      </a>
+      <div class="header-actions">
+        <div class="progress-pill" id="progress-pill" title="学习进度">
+          <svg viewBox="0 0 36 36" class="progress-ring">
+            <circle class="progress-ring-bg" cx="18" cy="18" r="15.5"/>
+            <circle class="progress-ring-fill" id="progress-ring" cx="18" cy="18" r="15.5"/>
+          </svg>
+          <span id="progress-text">0/50</span>
         </div>
       </div>
-      <nav class="header-stats" id="stats"></nav>
     </div>
   </header>
 
-  <main class="container">
+  <main class="page">
+    <!-- Hero: Today's lesson -->
     <section class="hero" id="hero">
-      <div class="hero-badge">今日推荐</div>
-      <div class="hero-content" id="today-card">
-        <div class="loading">加载中…</div>
+      <div class="section-label">
+        <span class="pulse-dot"></span>
+        今日推荐
+      </div>
+      <div id="today-card" class="today-slot">
+        <div class="skeleton skeleton-hero"></div>
       </div>
     </section>
 
-    <section class="filters">
-      <div class="filter-group">
-        <label for="artist-filter">艺人筛选</label>
-        <select id="artist-filter">
-          <option value="">全部艺人</option>
-        </select>
+    <!-- Stats bar -->
+    <section class="stats-bar" id="stats-bar"></section>
+
+    <!-- Artist filter chips -->
+    <section class="artist-section">
+      <div class="section-head">
+        <h2>按艺人浏览</h2>
+        <button class="text-btn" id="clear-filter" hidden>清除筛选</button>
       </div>
-      <div class="filter-group">
-        <label for="search-input">搜索歌曲</label>
-        <input type="search" id="search-input" placeholder="输入歌曲名或艺人…">
-      </div>
+      <div class="artist-chips" id="artist-chips"></div>
     </section>
 
+    <!-- Search + history -->
     <section class="history-section">
-      <h2>学习历史</h2>
-      <div class="history-grid" id="history-grid">
-        <div class="loading">加载历史记录…</div>
+      <div class="section-head">
+        <h2>学习历史</h2>
+        <div class="search-wrap">
+          <svg class="search-icon" viewBox="0 0 20 20" fill="none"><circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 13l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <input type="search" id="search-input" placeholder="搜索歌曲或艺人…" autocomplete="off">
+        </div>
       </div>
+      <div class="history-grid" id="history-grid">
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+      </div>
+    </section>
+
+    <!-- Catalog preview -->
+    <section class="catalog-section">
+      <div class="section-head">
+        <h2>曲库预览</h2>
+        <span class="section-meta" id="catalog-meta"></span>
+      </div>
+      <div class="catalog-grid" id="catalog-grid"></div>
     </section>
   </main>
 
-  <aside class="reader-panel" id="reader-panel" aria-hidden="true">
-    <div class="reader-header">
-      <button class="close-btn" id="close-reader" aria-label="关闭">×</button>
-      <div class="reader-meta" id="reader-meta"></div>
+  <!-- Reader overlay -->
+  <div class="reader-overlay" id="reader-overlay"></div>
+
+  <!-- Reader panel -->
+  <aside class="reader" id="reader" aria-hidden="true">
+    <div class="reader-progress" id="reader-progress"></div>
+    <header class="reader-top">
+      <button class="icon-btn" id="close-reader" aria-label="关闭">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <div class="reader-title-block" id="reader-meta"></div>
+      <button class="icon-btn" id="toggle-toc" aria-label="目录">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </header>
+
+    <div class="reader-layout">
+      <nav class="reader-toc" id="reader-toc">
+        <p class="toc-label">章节目录</p>
+        <ul id="toc-list"></ul>
+      </nav>
+      <article class="reader-content markdown-body" id="reader-body">
+        <div class="loading-state">加载中…</div>
+      </article>
     </div>
-    <article class="reader-body markdown-body" id="reader-body"></article>
   </aside>
-  <div class="overlay" id="overlay"></div>
 
   <footer class="site-footer">
-    <p>10 位 Alternative R&B 艺人 · 每日一首 · 逐句精讲</p>
+    <p>10 位 Alternative R&B 艺人 · 50 首经典 · 每日一首逐句精讲</p>
+    <p class="footer-sub">dvsn · 6LACK · Bryson Tiller · Frank Ocean · Daniel Caesar · H.E.R. · Gallant · Emotional Oranges · Jhené Aiko · Sampha</p>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
