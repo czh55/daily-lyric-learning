@@ -5,8 +5,15 @@
 ## 功能
 
 - **每日推荐**：Cursor Automation 每天早上 8:00 随机选歌并生成逐句精讲
-- **历史查看**：GitHub Pages 网站展示所有学习记录，支持按艺人筛选和搜索
+- **历史查看**：GitHub Pages 网站展示所有学习记录，支持按日期、艺人筛选和搜索
 - **50 首曲库**：10 位艺人 × 5 首经典曲目
+
+## 网站功能
+
+- **日历筛选**：点击有记录的日期，查看当日精讲
+- **艺人筛选 / 搜索**：快速定位历史课程
+- **阅读器**：章节目录、阅读进度、检测题答案切换
+- **深度链接**：`?date=2026-06-14` 或 `#gallant-doesnt-matter`
 
 ## 本地预览
 
@@ -51,6 +58,19 @@ git push -u origin main
 | 工具 | Git push（需要 Cloud Agent 权限） |
 
 自动化指令见 `prompts/automation-instructions.md`。
+
+### 4. Prompt 修改与合并到 main
+
+**修改讲解风格/结构：** 编辑 `prompts/lyric-learning-prompt.md`，详见 `prompts/automation-instructions.md` 中的「Prompt 适应性修改指南」。
+
+**确保每次部署到 GitHub Pages：**
+
+| 方式 | 说明 |
+|------|------|
+| 推荐 | Automation 直接在 `main` 分支 commit + push |
+| 备选 | 推送到 feature 分支并开 PR，标题以 `Daily:` 开头，CI 自动 squash 合并到 main |
+
+合并到 main 后，`.github/workflows/deploy-pages.yml` 会自动部署网站。
 
 ## 目录结构
 

@@ -1,0 +1,33 @@
+name: Auto-merge Daily PR
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  automerge:
+    if: startsWith(github.event.pull_request.title, 'Daily:')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enable auto-merge
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
+
+            // Wait for required checks (Pages deploy is non-blocking)
+            await github.rest.pulls.merge({
+              owner,
+              repo,
+              pull_number,
+              merge_method: 'squash',
+              commit_title: context.payload.pull_request.title
+            });
+
+            console.log(`Merged PR #${pull_number}: ${context.payload.pull_request.title}`);
