@@ -32,6 +32,8 @@ let history = [];
 let artists = [];
 let songs = [];
 let activeFilter = '';
+let activeDateFilter = '';
+let calendarView = { year: new Date().getFullYear(), month: new Date().getMonth() };
 let currentEntry = null;
 
 // ── Data loading ──────────────────────────────────────────
@@ -70,6 +72,37 @@ function artistColor(id) {
 
 function getSongMeta(slug) {
   return songs.find(s => s.slug === slug) || {};
+}
+
+function getEntryByDate(dateStr) {
+  return history.find(e => e.date === dateStr);
+}
+
+function getEntryDatesMap() {
+  return new Map(history.map(e => [e.date, e]));
+}
+
+function applyFilters() {
+  renderToday();
+  renderHistory(document.getElementById('search-input').value);
+  renderCalendar();
+  updateFilterButtons();
+}
+
+function updateFilterButtons() {
+  document.getElementById('clear-date-filter').hidden = !activeDateFilter;
+  document.getElementById('clear-filter').hidden = !activeFilter && !activeDateFilter;
+}
+
+function clearAllFilters() {
+  activeFilter = '';
+  activeDateFilter = '';
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  document.getElementById('search-input').value = '';
+  const url = new URL(location.href);
+  url.searchParams.delete('date');
+  window.history.replaceState(null, '', url.pathname + url.hash);
+  applyFilters();
 }
 
 function difficultyTag(diff) {
@@ -208,28 +241,46 @@ function renderStats() {
 function renderToday() {
   const today = getTodayStr();
   const sorted = [...history].sort((a, b) => b.date.localeCompare(a.date));
-  const todayEntry = history.find(e => e.date === today) || sorted[0];
+  const selectedEntry = activeDateFilter ? getEntryByDate(activeDateFilter) : null;
+  const todayEntry = selectedEntry
+    || history.find(e => e.date === today)
+    || sorted[0];
   const container = document.getElementById('today-card');
+  const heroLabel = document.querySelector('.hero .section-label');
+
+  if (heroLabel) {
+    if (activeDateFilter && selectedEntry) {
+      heroLabel.innerHTML = `<span class="pulse-dot"></span>${formatDate(activeDateFilter)} 的学习`;
+    } else if (activeDateFilter) {
+      heroLabel.innerHTML = `<span class="pulse-dot"></span>${formatDate(activeDateFilter)} · 暂无记录`;
+    } else {
+      heroLabel.innerHTML = `<span class="pulse-dot"></span>今日推荐`;
+    }
+  }
 
   if (!todayEntry) {
     container.innerHTML = `
       <div class="hero-card empty">
-        <p>还没有学习记录</p>
-        <p>自动化将在每天推送今日歌曲</p>
+        <p>${activeDateFilter ? '该日期暂无学习记录' : '还没有学习记录'}</p>
+        <p>${activeDateFilter ? '试试选择其他日期，或点击「返回最新」' : '自动化将在每天推送今日歌曲'}</p>
       </div>`;
     return;
   }
 
-  const isToday = todayEntry.date === today;
+  const isToday = !activeDateFilter && todayEntry.date === today;
+  const isSelected = activeDateFilter && todayEntry.date === activeDateFilter;
   const meta = getSongMeta(todayEntry.slug);
   const color = artistColor(todayEntry.artist);
+  const dateLabel = isSelected
+    ? formatDate(todayEntry.date)
+    : (isToday ? `✦ 今日 · ${formatDate(todayEntry.date)}` : `最新 · ${formatDate(todayEntry.date)}`);
 
   container.innerHTML = `
     <div class="hero-card" style="--artist-color: ${color}">
       <div class="hero-inner">
         <div class="hero-artist">${todayEntry.artistName || artistName(todayEntry.artist)}</div>
         <div class="hero-title">${todayEntry.title}</div>
-        <div class="hero-date">${isToday ? '✦ 今日 · ' : '最新 · '}${formatDate(todayEntry.date)}</div>
+        <div class="hero-date">${dateLabel}</div>
         <div class="hero-tags">
           ${difficultyTag(meta.difficulty)}
           ${meta.bpm ? `<span class="tag">节奏 ${meta.bpm}</span>` : ''}
@@ -263,18 +314,103 @@ function setArtistFilter(id) {
   document.querySelectorAll('.chip').forEach(c => {
     c.classList.toggle('active', c.dataset.artist === activeFilter);
   });
-  document.getElementById('clear-filter').hidden = !activeFilter;
-  renderHistory(document.getElementById('search-input').value);
+  applyFilters();
 }
 
 window.setArtistFilter = setArtistFilter;
 
-document.getElementById('clear-filter').addEventListener('click', () => {
-  activeFilter = '';
-  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-  document.getElementById('clear-filter').hidden = true;
-  renderHistory(document.getElementById('search-input').value);
+document.getElementById('clear-filter').addEventListener('click', clearAllFilters);
+
+document.getElementById('clear-date-filter').addEventListener('click', () => {
+  activeDateFilter = '';
+  const url = new URL(location.href);
+  url.searchParams.delete('date');
+  window.history.replaceState(null, '', url.pathname + url.hash);
+  applyFilters();
 });
+
+// ── Calendar ──────────────────────────────────────────────
+
+function renderCalendar() {
+  const grid = document.getElementById('cal-grid');
+  const label = document.getElementById('cal-month-label');
+  const { year, month } = calendarView;
+  const entryMap = getEntryDatesMap();
+  const today = getTodayStr();
+
+  label.textContent = new Date(year, month, 1).toLocaleDateString('zh-CN', {
+    year: 'numeric', month: 'long'
+  });
+
+  const firstDay = new Date(year, month, 1);
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const startPad = (firstDay.getDay() + 6) % 7; // Monday = 0
+
+  let html = '';
+
+  for (let i = 0; i < startPad; i++) {
+    html += '<span class="cal-day cal-day--empty"></span>';
+  }
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const hasEntry = entryMap.has(dateStr);
+    const isSelected = activeDateFilter === dateStr;
+    const isToday = dateStr === today;
+
+    const classes = [
+      'cal-day',
+      hasEntry ? 'cal-day--has-entry' : '',
+      isSelected ? 'cal-day--selected' : '',
+      isToday ? 'cal-day--today' : ''
+    ].filter(Boolean).join(' ');
+
+    html += `
+      <button class="${classes}" ${hasEntry ? `onclick="setDateFilter('${dateStr}')"` : 'disabled'}
+              aria-label="${dateStr}${hasEntry ? ' 有学习记录' : ''}">
+        ${day}
+        ${hasEntry ? '<i class="cal-dot"></i>' : ''}
+      </button>`;
+  }
+
+  grid.innerHTML = html;
+}
+
+function setDateFilter(dateStr) {
+  activeDateFilter = activeDateFilter === dateStr ? '' : dateStr;
+
+  if (activeDateFilter) {
+    const [y, m] = activeDateFilter.split('-').map(Number);
+    calendarView = { year: y, month: m - 1 };
+    const url = new URL(location.href);
+    url.searchParams.set('date', activeDateFilter);
+    window.history.replaceState(null, '', url.pathname + '?' + url.searchParams.toString() + url.hash);
+  } else {
+    const url = new URL(location.href);
+    url.searchParams.delete('date');
+    window.history.replaceState(null, '', url.pathname + url.hash);
+  }
+
+  applyFilters();
+
+  if (activeDateFilter) {
+    document.getElementById('hero')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+window.setDateFilter = setDateFilter;
+
+function shiftCalendarMonth(delta) {
+  let { year, month } = calendarView;
+  month += delta;
+  if (month > 11) { month = 0; year++; }
+  if (month < 0) { month = 11; year--; }
+  calendarView = { year, month };
+  renderCalendar();
+}
+
+document.getElementById('cal-prev').addEventListener('click', () => shiftCalendarMonth(-1));
+document.getElementById('cal-next').addEventListener('click', () => shiftCalendarMonth(1));
 
 // ── Render: History grid ──────────────────────────────────
 
@@ -282,6 +418,7 @@ function renderHistory(searchQuery = '') {
   const grid = document.getElementById('history-grid');
   let filtered = [...history].sort((a, b) => b.date.localeCompare(a.date));
 
+  if (activeDateFilter) filtered = filtered.filter(e => e.date === activeDateFilter);
   if (activeFilter) filtered = filtered.filter(e => e.artist === activeFilter);
   if (searchQuery) {
     const q = searchQuery.toLowerCase();
@@ -292,7 +429,10 @@ function renderHistory(searchQuery = '') {
   }
 
   if (filtered.length === 0) {
-    grid.innerHTML = `<div class="empty-state"><p>暂无匹配的学习记录</p></div>`;
+    const msg = activeDateFilter
+      ? '该日期暂无匹配的学习记录'
+      : (activeFilter || searchQuery ? '暂无匹配的学习记录' : '暂无学习记录');
+    grid.innerHTML = `<div class="empty-state"><p>${msg}</p></div>`;
     return;
   }
 
@@ -451,6 +591,7 @@ document.getElementById('toggle-toc').addEventListener('click', () => toggleTOC(
 
 document.getElementById('search-input').addEventListener('input', e => {
   renderHistory(e.target.value);
+  updateFilterButtons();
 });
 
 document.addEventListener('keydown', e => {
@@ -469,12 +610,23 @@ function handleHash() {
 
 async function init() {
   await loadData();
+
+  // Restore date filter from URL ?date=YYYY-MM-DD
+  const urlDate = new URLSearchParams(location.search).get('date');
+  if (urlDate && history.some(e => e.date === urlDate)) {
+    activeDateFilter = urlDate;
+    const [y, m] = urlDate.split('-').map(Number);
+    calendarView = { year: y, month: m - 1 };
+  }
+
   renderProgress();
   renderStats();
   renderToday();
   renderArtistChips();
+  renderCalendar();
   renderHistory();
   renderCatalog();
+  updateFilterButtons();
   handleHash();
 }
 

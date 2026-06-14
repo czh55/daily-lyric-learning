@@ -54,6 +54,33 @@
     <!-- Stats bar -->
     <section class="stats-bar" id="stats-bar"></section>
 
+    <!-- Calendar filter -->
+    <section class="calendar-section">
+      <div class="section-head">
+        <h2>按日期浏览</h2>
+        <button class="text-btn" id="clear-date-filter" hidden>返回最新</button>
+      </div>
+      <div class="calendar-panel">
+        <div class="calendar-header">
+          <button class="cal-nav" id="cal-prev" aria-label="上个月">
+            <svg viewBox="0 0 20 20" fill="none"><path d="M12 4l-6 6 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </button>
+          <span class="cal-month-label" id="cal-month-label"></span>
+          <button class="cal-nav" id="cal-next" aria-label="下个月">
+            <svg viewBox="0 0 20 20" fill="none"><path d="M8 4l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <div class="cal-weekdays">
+          <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+        <div class="cal-legend">
+          <span class="cal-legend-item"><i class="dot dot--learned"></i> 已学习</span>
+          <span class="cal-legend-item"><i class="dot dot--selected"></i> 已选中</span>
+        </div>
+      </div>
+    </section>
+
     <!-- Artist filter chips -->
     <section class="artist-section">
       <div class="section-head">
