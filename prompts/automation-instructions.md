@@ -45,9 +45,14 @@ slug: frank-ocean-pink-white
 }
 ```
 
-## Step 4: 提交并推送
+## Step 4: 提交并推送到 main
+
+**必须直接在 `main` 分支提交并推送，不要创建功能分支，不要开 PR。**
 
 ```bash
+git fetch origin main
+git checkout main
+git pull origin main
 git add assets/lessons/ data/history.json
 git commit -m "Daily: {artistName} - {title} ({date})"
 git push origin main
@@ -61,3 +66,4 @@ git push origin main
 - 如果今天已有记录（同一天重复运行），跳过不重复生成
 - 精讲内容用中文，歌词原文保留英文
 - 确保 Markdown 格式正确，表格完整
+- **所有变更必须直接提交到 `main` 分支**，禁止推送到其他分支
