@@ -4,6 +4,7 @@ artist: 6lack
 artistName: 6LACK
 title: Disconnect
 slug: 6lack-disconnect
+qishuiUrl: https://music.douyin.com/qishui/share/track?track_id=6732297169111353345
 ---
 
 # 6LACK — Disconnect
@@ -302,3 +303,9 @@ slug: 6lack-disconnect
 **下一首：6LACK — Switch**
 
 **理由**：《Switch》与《Disconnect》同属 *East Atlanta Love Letter*，且已收录在本项目曲库中。两首均为 medium 难度、BPM 中等，但情感色调形成对照：《Disconnect》是关系破裂时的疲惫与恳求，《Switch》则是「换人」的决绝与自我保全。学完「沟通断裂」的表达后，《Switch》带你进入 6LACK 的另一极——当 disconnect 无法修复时，主角选择 switch。同一专辑、同一艺人、连续聆听，能建立完整的 6LACK 情感叙事弧线。
+
+---
+
+## 八、汽水音乐
+
+在汽水音乐收听今日歌曲：[Disconnect](https://music.douyin.com/qishui/share/track?track_id=6732297169111353345)

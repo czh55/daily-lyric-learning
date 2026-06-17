@@ -4,6 +4,7 @@ artist: 6lack
 artistName: 6LACK
 title: Pretty Little Fears
 slug: 6lack-pretty-little-fears
+qishuiUrl: https://music.douyin.com/qishui/share/track?track_id=6732297171023955970
 ---
 
 # 6LACK — Pretty Little Fears (feat. J. Cole)
@@ -355,3 +356,9 @@ slug: 6lack-pretty-little-fears
 **下一首：6LACK — PRBLMS**
 
 **理由**：《PRBLMS》是 6LACK 2016 年 breakthrough 单曲，收录在本项目曲库中，难度 easy、BPM slow，适合巩固今天学到的对话式口语表达。与《Pretty Little Fears》同属「关系困境」主题，但情感色调形成对照：今日课程学的是「请对我坦诚、恐惧也是音乐」的柔软沟通，《PRBLMS》则是成名作里更冷峻、更绝望的「问题关系」独白（Problems 谐音 PRBLMS）。先学坦诚表达，再回溯艺人成名的阴郁底色，能建立完整的 6LACK 情感词汇表。
+
+---
+
+## 八、汽水音乐
+
+在汽水音乐收听今日歌曲：[Pretty Little Fears](https://music.douyin.com/qishui/share/track?track_id=6732297171023955970)
