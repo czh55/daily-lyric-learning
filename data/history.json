@@ -1,6 +1,14 @@
 {
   "entries": [
     {
+      "date": "2026-06-23",
+      "artist": "daniel-caesar",
+      "artistName": "Daniel Caesar",
+      "title": "Best Part",
+      "slug": "daniel-caesar-best-part",
+      "file": "assets/lessons/2026-06-23-daniel-caesar-best-part.md"
+    },
+    {
       "date": "2026-06-22",
       "artist": "bryson-tiller",
       "artistName": "Bryson Tiller",
