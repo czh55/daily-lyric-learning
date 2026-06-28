@@ -2,13 +2,39 @@
 
 从 10 位 Alternative R&B 艺人的歌词中，每日学习地道英文表达。
 
-## 功能
+## 概述
 
-- **每日推荐**：Cursor Automation 每天早上 8:00 随机选歌并生成逐句精讲
-- **历史查看**：GitHub Pages 网站展示所有学习记录，支持按艺人筛选和搜索
-- **50 首曲库**：10 位艺人 × 5 首经典曲目
+基于 Cursor Automations 的全自动英文歌词学习网站，每天早上 8:00 随机选歌并生成逐句精讲，部署到 GitHub Pages。
 
-## 本地预览
+## 项目结构
+
+```
+daily-lyric-learning/
+├── index.html                  # 主页
+├── assets/
+│   ├── app.js                  # 前端逻辑
+│   ├── style.css
+│   └── lessons/                # 每日 Markdown 精讲
+├── data/
+│   ├── artists.json            # 10 位艺人信息
+│   ├── songs.json              # 50 首歌曲曲库
+│   ├── history.json            # 学习历史索引
+│   └── qishui-tracks.json      # 汽水音乐链接缓存
+├── scripts/
+│   ├── generate.py             # 主生成脚本（选题 + history）
+│   └── qishui.py               # 汽水音乐缓存查找
+├── prompts/
+│   ├── lyric-learning-prompt.md  # 精讲内容模板
+│   └── qishui-lookup.md          # 汽水链接查找指南
+├── .cursor/automations/
+│   ├── daily-trigger.txt       # Automation 触发语（一行）
+│   └── daily-prompt.md         # Agent 完整执行步骤
+└── .github/workflows/          # GitHub Pages 部署
+```
+
+## 使用方式
+
+### 本地预览
 
 ```bash
 cd ~/Projects/daily-lyric-learning
@@ -16,58 +42,49 @@ python3 -m http.server 8080
 # 打开 http://localhost:8080
 ```
 
-## 部署到 GitHub Pages
-
-### 1. 创建 GitHub 仓库
-
-在 GitHub 上新建仓库 `daily-lyric-learning`（Public），然后：
+### 本地生成
 
 ```bash
-cd ~/Projects/daily-lyric-learning
-git add .
-git commit -m "Initial setup: GitHub Pages site and song catalog"
-git remote add origin https://github.com/<你的用户名>/daily-lyric-learning.git
-git branch -M main
-git push -u origin main
+# 选题并写入 .daily/context.json
+python3 scripts/generate.py --prepare
+
+# 预览选题（不写入）
+python3 scripts/generate.py --prepare --dry-run
+
+# 查看今日是否已生成
+python3 scripts/generate.py --status
+
+# 列出曲库
+python3 scripts/generate.py --list
+
+# Agent 写完精讲后，更新 history
+python3 scripts/generate.py --finalize
 ```
 
-### 2. 启用 GitHub Pages
+### Cursor Automation（推荐）
 
-进入仓库 **Settings → Pages**：
-- Source 选择 **GitHub Actions**
-- 推送后 Actions 会自动部署
+1. 创建 Automation，cron: `0 8 * * *`
+2. **Prompt 仅填一行**（与 daily-algo 一致）：
+
+   ```
+   读取 .cursor/automations/daily-prompt.md 并严格执行其中的所有步骤。
+   ```
+
+3. 完整步骤见 `.cursor/automations/daily-prompt.md`
+
+Agent 执行流程：
+1. `python3 scripts/generate.py --prepare` — 自动选题
+2. 按模板生成精讲 Markdown（LLM）
+3. `python3 scripts/generate.py --finalize` — 更新 history
+4. `git push origin main`
+
+GitHub Actions 自动部署到 GitHub Pages。
+
+## 部署到 GitHub Pages
+
+进入仓库 **Settings → Pages** → Source 选择 **GitHub Actions**。
 
 网站地址：`https://<你的用户名>.github.io/daily-lyric-learning/`
-
-### 3. 创建 Cursor Automation
-
-在 Cursor 中打开 Automations，创建定时自动化：
-
-| 配置项 | 值 |
-|--------|-----|
-| 名称 | Daily Lyric Learning |
-| 触发 | 每天 8:00（cron: `0 8 * * *`） |
-| 仓库 | 你的 `daily-lyric-learning` 仓库，main 分支 |
-| 工具 | Git push（需要 Cloud Agent 权限） |
-
-自动化指令见 `prompts/automation-instructions.md`。
-
-## 目录结构
-
-```
-daily-lyric-learning/
-├── index.html              # 主页
-├── assets/                 # 样式和脚本
-├── data/
-│   ├── artists.json        # 10 位艺人信息
-│   ├── songs.json          # 50 首歌曲曲库
-│   └── history.json        # 学习历史索引
-├── assets/lessons/         # 每日生成的 Markdown 精讲
-├── prompts/
-│   ├── lyric-learning-prompt.md
-│   └── automation-instructions.md
-└── .github/workflows/      # GitHub Pages 部署
-```
 
 ## 艺人库
 
