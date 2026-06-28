@@ -40,7 +40,7 @@ python3 scripts/generate.py --finalize
 git fetch origin main
 git checkout main
 git pull origin main
-git add assets/lessons/ data/history.json data/qishui-tracks.json
+git add docs/ data/history.json data/qishui-tracks.json
 git commit -m "Daily: {artistName} - {title} ({date})"
 git push origin main
 ```

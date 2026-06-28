@@ -7,7 +7,7 @@
   python3 scripts/generate.py --finalize   # 校验精讲文件并更新 history.json
   python3 scripts/generate.py --dry-run    # 预览选题，不写入文件
   python3 scripts/generate.py --list       # 列出曲库
-  python3 scripts/generate.py --status     # 查看今日是否已生成
+  python3 scripts/generate.py --sync       # 同步 data/ 到 docs/data/
 """
 
 from __future__ import annotations
@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 import random
 import re
+import shutil
 import sys
 from argparse import ArgumentParser
 from datetime import date
@@ -28,7 +29,9 @@ if str(ROOT) not in sys.path:
 from scripts.qishui import lookup_url  # noqa: E402
 
 DATA = ROOT / "data"
-LESSONS = ROOT / "assets" / "lessons"
+DOCS = ROOT / "docs"
+DOCS_DATA = DOCS / "data"
+LESSONS = DOCS / "assets" / "lessons"
 DAILY = ROOT / ".daily"
 CONTEXT_FILE = DAILY / "context.json"
 
@@ -109,7 +112,7 @@ def build_context(song: dict, date_str: str) -> dict:
         "difficulty": song.get("difficulty", ""),
         "bpm": song.get("bpm", ""),
         "file": lesson_file,
-        "lessonPath": str(ROOT / lesson_file),
+        "lessonPath": str(DOCS / lesson_file),
         "qishuiUrl": qishui_url or "",
         "promptTemplate": "prompts/lyric-learning-prompt.md",
         "skipped": False,
@@ -149,6 +152,16 @@ def lesson_has_body(path: Path) -> bool:
     text = path.read_text(encoding="utf-8")
     body = re.sub(r"^---[\s\S]*?---\s*", "", text, count=1).strip()
     return len(body) > 200 and "## 一、歌曲概览" in body
+
+
+def sync_docs_data() -> None:
+    """将 data/ 同步到 docs/data/，供 GitHub Pages 静态访问。"""
+    DOCS_DATA.mkdir(parents=True, exist_ok=True)
+    for name in ("history.json", "artists.json", "songs.json"):
+        src = DATA / name
+        if src.exists():
+            shutil.copy2(src, DOCS_DATA / name)
+    print(f"✓ 已同步 data/ → {DOCS_DATA.relative_to(ROOT)}/")
 
 
 def prepare(date_str: str, dry_run: bool = False, force: bool = False) -> bool:
@@ -239,6 +252,7 @@ def finalize(date_str: str, force: bool = False) -> bool:
     )
     save_json(HISTORY_FILE, {"entries": entries})
     print(f"✓ 已更新 {HISTORY_FILE.relative_to(ROOT)}")
+    sync_docs_data()
     return True
 
 
@@ -271,9 +285,14 @@ def main() -> None:
     parser.add_argument("--status", action="store_true", help="查看今日状态")
     parser.add_argument("--date", type=str, help="指定日期 YYYY-MM-DD（默认今天）")
     parser.add_argument("--force", action="store_true", help="覆盖已有日期记录")
+    parser.add_argument("--sync", action="store_true", help="同步 data/ 到 docs/data/")
     args = parser.parse_args()
 
     date_str = args.date or date.today().isoformat()
+
+    if args.sync:
+        sync_docs_data()
+        return
 
     if args.list:
         list_songs()

@@ -10,27 +10,32 @@
 
 ```
 daily-lyric-learning/
-├── index.html                  # 主页
-├── assets/
-│   ├── app.js                  # 前端逻辑
-│   ├── style.css
-│   └── lessons/                # 每日 Markdown 精讲
-├── data/
-│   ├── artists.json            # 10 位艺人信息
-│   ├── songs.json              # 50 首歌曲曲库
-│   ├── history.json            # 学习历史索引
-│   └── qishui-tracks.json      # 汽水音乐链接缓存
+├── docs/                       # GitHub Pages 根目录
+│   ├── index.html              # 主页
+│   ├── .nojekyll
+│   ├── assets/
+│   │   ├── app.js
+│   │   ├── style.css
+│   │   └── lessons/            # 每日 Markdown 精讲
+│   └── data/                   # 前端运行时数据（由 scripts 同步）
+├── data/                       # 数据源（脚本读写）
+│   ├── artists.json
+│   ├── songs.json
+│   ├── history.json
+│   └── qishui-tracks.json
 ├── scripts/
-│   ├── generate.py             # 主生成脚本（选题 + history）
+│   ├── generate.py             # 主生成脚本（选题 + history + 同步 docs）
 │   └── qishui.py               # 汽水音乐缓存查找
 ├── prompts/
-│   ├── lyric-learning-prompt.md  # 精讲内容模板
-│   └── qishui-lookup.md          # 汽水链接查找指南
+│   ├── lyric-learning-prompt.md
+│   └── qishui-lookup.md
 ├── .cursor/automations/
 │   ├── daily-trigger.txt       # Automation 触发语（一行）
 │   └── daily-prompt.md         # Agent 完整执行步骤
 └── .github/workflows/          # GitHub Pages 部署
 ```
+
+与 `daily-algo` 一致：`data/` 放数据源，`docs/` 放网站，`scripts/` 负责生成与同步。
 
 ## 使用方式
 
@@ -38,7 +43,7 @@ daily-lyric-learning/
 
 ```bash
 cd ~/Projects/daily-lyric-learning
-python3 -m http.server 8080
+python3 -m http.server 8080 --directory docs
 # 打开 http://localhost:8080
 ```
 
@@ -57,8 +62,11 @@ python3 scripts/generate.py --status
 # 列出曲库
 python3 scripts/generate.py --list
 
-# Agent 写完精讲后，更新 history
+# Agent 写完精讲后，更新 history 并同步 docs/data/
 python3 scripts/generate.py --finalize
+
+# 仅同步 data/ → docs/data/
+python3 scripts/generate.py --sync
 ```
 
 ### Cursor Automation（推荐）
@@ -75,10 +83,10 @@ python3 scripts/generate.py --finalize
 Agent 执行流程：
 1. `python3 scripts/generate.py --prepare` — 自动选题
 2. 按模板生成精讲 Markdown（LLM）
-3. `python3 scripts/generate.py --finalize` — 更新 history
+3. `python3 scripts/generate.py --finalize` — 更新 history + 同步 docs
 4. `git push origin main`
 
-GitHub Actions 自动部署到 GitHub Pages。
+GitHub Actions 自动部署 `docs/` 到 GitHub Pages。
 
 ## 部署到 GitHub Pages
 
