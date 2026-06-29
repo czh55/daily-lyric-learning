@@ -212,7 +212,30 @@ def prepare(date_str: str, dry_run: bool = False, force: bool = False) -> bool:
     return True
 
 
-def finalize(date_str: str, force: bool = False) -> bool:
+def generate_lesson_audio(context: dict, skip_audio: bool = False) -> bool:
+    """为当日精讲生成语音讲解 MP3。"""
+    if skip_audio:
+        print("跳过语音生成（--skip-audio）")
+        return False
+    try:
+        from scripts.generate_audio import generate_audio
+    except ImportError:
+        print("⚠ 未安装 edge-tts，跳过语音生成（pip install -r requirements.txt）")
+        return False
+
+    lesson_path = Path(context["lessonPath"])
+    lesson_md = lesson_path.read_text(encoding="utf-8")
+    meta = {
+        "date": context["date"],
+        "artist": context["artist"],
+        "artistName": context["artistName"],
+        "title": context["title"],
+        "slug": context["slug"],
+    }
+    return generate_audio(meta, lesson_md, context["date"])
+
+
+def finalize(date_str: str, force: bool = False, skip_audio: bool = False) -> bool:
     if not CONTEXT_FILE.exists():
         print("未找到 .daily/context.json，请先运行 --prepare")
         return False
@@ -253,6 +276,7 @@ def finalize(date_str: str, force: bool = False) -> bool:
     save_json(HISTORY_FILE, {"entries": entries})
     print(f"✓ 已更新 {HISTORY_FILE.relative_to(ROOT)}")
     sync_docs_data()
+    generate_lesson_audio(context, skip_audio=skip_audio)
     return True
 
 
@@ -286,6 +310,7 @@ def main() -> None:
     parser.add_argument("--date", type=str, help="指定日期 YYYY-MM-DD（默认今天）")
     parser.add_argument("--force", action="store_true", help="覆盖已有日期记录")
     parser.add_argument("--sync", action="store_true", help="同步 data/ 到 docs/data/")
+    parser.add_argument("--skip-audio", action="store_true", help="跳过语音讲解生成")
     args = parser.parse_args()
 
     date_str = args.date or date.today().isoformat()
@@ -303,7 +328,7 @@ def main() -> None:
         return
 
     if args.finalize:
-        ok = finalize(date_str, force=args.force)
+        ok = finalize(date_str, force=args.force, skip_audio=args.skip_audio)
         sys.exit(0 if ok else 1)
 
     if args.prepare or not any([args.finalize, args.list, args.status]):

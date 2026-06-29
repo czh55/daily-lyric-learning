@@ -79,6 +79,7 @@ function renderToday() {
         ${songMeta.difficulty ? `<span>${songMeta.difficulty}</span>` : ''}
         ${songMeta.bpm ? `<span>${songMeta.bpm}</span>` : ''}
       </p>
+      <div id="today-audio"></div>
       <button class="btn-primary" type="button" data-file="${todayEntry.file}">
         开始学习
       </button>
@@ -86,6 +87,13 @@ function renderToday() {
 
   container.querySelector('.btn-primary').addEventListener('click', () => {
     openEntry(todayEntry.file);
+  });
+
+  audioExistsForDate(todayEntry.date).then(hasAudio => {
+    if (hasAudio) {
+      const slot = document.getElementById('today-audio');
+      if (slot) slot.innerHTML = renderAudioPlayer(todayEntry.date);
+    }
   });
 }
 
@@ -130,7 +138,85 @@ function renderHistory(filterArtist = '', searchQuery = '') {
   });
 }
 
-function enhanceMarkdown(html) {
+function audioUrlForDate(dateStr) {
+  return resolveUrl(`audio/${dateStr}.mp3`);
+}
+
+async function audioExistsForDate(dateStr) {
+  try {
+    const res = await fetch(audioUrlForDate(dateStr), { method: 'HEAD' });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+function renderAudioPlayer(dateStr) {
+  return `
+    <div class="audio-section">
+      <p class="audio-label">🎧 语音讲解</p>
+      <p class="audio-hint">开车或通勤时可听，跟着讲解过一遍今日歌曲</p>
+      <div class="audio-player-wrap">
+        <audio id="audio-${dateStr}" controls class="audio-player" preload="metadata" src="${audioUrlForDate(dateStr)}">
+          您的浏览器不支持音频播放
+        </audio>
+        <div class="playback-speed">
+          <span class="speed-label">速度</span>
+          <button type="button" class="speed-btn" onclick="setSpeed('${dateStr}', 0.75)">0.75x</button>
+          <button type="button" class="speed-btn active" onclick="setSpeed('${dateStr}', 1)">1x</button>
+          <button type="button" class="speed-btn" onclick="setSpeed('${dateStr}', 1.25)">1.25x</button>
+          <button type="button" class="speed-btn" onclick="setSpeed('${dateStr}', 1.5)">1.5x</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function setSpeed(dateStr, rate) {
+  const audio = document.getElementById(`audio-${dateStr}`);
+  if (!audio) return;
+  audio.playbackRate = rate;
+  const wrap = audio.closest('.audio-player-wrap');
+  if (!wrap) return;
+  wrap.querySelectorAll('.speed-btn').forEach(btn => {
+    btn.classList.remove('active');
+    if (parseFloat(btn.textContent) === rate) btn.classList.add('active');
+  });
+}
+
+function extractEnglishLine(cardEl) {
+  const strong = cardEl.querySelector('strong');
+  if (!strong || !strong.textContent.includes('原句')) return '';
+  const text = cardEl.textContent.replace(/^▸\s*原句[：:]\s*/u, '').split('中文释义')[0].trim();
+  return text.replace(/\s+/g, ' ').trim();
+}
+
+function speakEnglish(text, lang = 'en-US') {
+  if (!text || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = lang;
+  utterance.rate = 0.9;
+  const voices = window.speechSynthesis.getVoices();
+  const preferred = voices.find(v => v.lang.startsWith(lang.split('-')[0]) && v.lang.includes(lang.split('-')[1] || ''));
+  if (preferred) utterance.voice = preferred;
+  window.speechSynthesis.speak(utterance);
+}
+
+function addSpeakButtons(wrapper, artistId) {
+  const lang = artistId === 'sampha' ? 'en-GB' : 'en-US';
+  wrapper.querySelectorAll('.lyric-card').forEach(card => {
+    const line = extractEnglishLine(card);
+    if (!line) return;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'speak-btn';
+    btn.setAttribute('aria-label', '朗读原句');
+    btn.textContent = '🔊 朗读';
+    btn.addEventListener('click', () => speakEnglish(line, lang));
+    card.appendChild(btn);
+  });
+}
+function enhanceMarkdown(html, artistId = '') {
   const wrapper = document.createElement('div');
   wrapper.innerHTML = html;
 
@@ -159,6 +245,7 @@ function enhanceMarkdown(html) {
     }
   });
 
+  addSpeakButtons(wrapper, artistId);
   return wrapper.innerHTML;
 }
 
@@ -182,9 +269,11 @@ async function openEntry(filePath) {
   const body = document.getElementById('lesson-body');
 
   if (entry) {
+    const hasAudio = await audioExistsForDate(entry.date);
     meta.innerHTML = `
       <h2>${entry.title}</h2>
-      <p>${entry.artistName || ARTIST_NAMES[entry.artist]} · ${formatDate(entry.date)}</p>`;
+      <p>${entry.artistName || ARTIST_NAMES[entry.artist]} · ${formatDate(entry.date)}</p>
+      ${hasAudio ? renderAudioPlayer(entry.date) : ''}`;
   } else {
     meta.innerHTML = '';
   }
@@ -197,7 +286,7 @@ async function openEntry(filePath) {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const md = stripFrontmatter(await res.text());
     if (typeof marked === 'undefined') throw new Error('marked not loaded');
-    body.innerHTML = enhanceMarkdown(marked.parse(md));
+    body.innerHTML = enhanceMarkdown(marked.parse(md), entry?.artist || '');
   } catch (err) {
     body.innerHTML = `<p class="error-state">内容加载失败（${err.message}），请刷新后重试。</p>`;
   }
@@ -212,6 +301,9 @@ document.getElementById('search-input').addEventListener('input', e => {
 });
 
 async function init() {
+  if (window.speechSynthesis) {
+    window.speechSynthesis.getVoices();
+  }
   await loadData();
   renderStats();
   renderToday();

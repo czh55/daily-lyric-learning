@@ -30,7 +30,7 @@ python3 scripts/generate.py --prepare
 python3 scripts/generate.py --finalize
 ```
 
-确认 `data/history.json` 已更新。
+确认 `data/history.json` 已更新。`finalize` 会自动调用 edge-tts 生成语音讲解 MP3（需 `pip install -r requirements.txt` 且系统有 ffmpeg）。
 
 ### 5. 提交并推送到 main
 
@@ -40,7 +40,7 @@ python3 scripts/generate.py --finalize
 git fetch origin main
 git checkout main
 git pull origin main
-git add docs/ data/history.json data/qishui-tracks.json
+git add docs/ data/history.json data/qishui-tracks.json requirements.txt
 git commit -m "Daily: {artistName} - {title} ({date})"
 git push origin main
 ```
