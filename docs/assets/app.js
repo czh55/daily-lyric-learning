@@ -16,6 +16,7 @@ let artists = [];
 let songs = [];
 let cachedVoices = [];
 let lineAudioPlayer = null;
+let currentLineManifest = null;
 
 function resolveUrl(path) {
   return new URL(path, window.location.href).href;
@@ -264,18 +265,17 @@ function playLineAudio(url, btn) {
   lineAudioPlayer = new Audio(resolveUrl(url));
   if (btn) btn.classList.add('playing');
   return lineAudioPlayer.play()
-    .then(() => new Promise(resolve => {
+    .then(() => {
       lineAudioPlayer.onended = () => {
         if (btn) btn.classList.remove('playing');
         lineAudioPlayer = null;
-        resolve(true);
       };
       lineAudioPlayer.onerror = () => {
         if (btn) btn.classList.remove('playing');
         lineAudioPlayer = null;
-        resolve(false);
       };
-    }))
+      return true;
+    })
     .catch(() => {
       if (btn) btn.classList.remove('playing');
       lineAudioPlayer = null;
@@ -284,11 +284,20 @@ function playLineAudio(url, btn) {
 }
 
 async function playLyricLine(text, lang, mp3Url, btn) {
-  if (mp3Url) {
-    const ok = await playLineAudio(mp3Url, btn);
-    if (ok) return;
+  if (btn) btn.disabled = true;
+  try {
+    if (mp3Url) {
+      const ok = await playLineAudio(mp3Url, btn);
+      if (ok) return;
+    }
+    if (btn) btn.classList.add('playing');
+    if (text) await speakEnglish(text, lang);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      if (!lineAudioPlayer) btn.classList.remove('playing');
+    }
   }
-  await speakEnglish(text, lang);
 }
 
 function addSpeakButtons(wrapper, artistId, lineManifest = null) {
@@ -303,7 +312,7 @@ function addSpeakButtons(wrapper, artistId, lineManifest = null) {
     btn.className = 'speak-btn';
     btn.setAttribute('aria-label', '朗读原句');
     btn.textContent = '🔊 朗读';
-    btn.addEventListener('click', () => playLyricLine(line, lang, mp3Url, btn));
+    btn.dataset.index = String(index);
     card.appendChild(btn);
   });
 }
@@ -338,7 +347,7 @@ function enhanceMarkdown(html, artistId = '', lineManifest = null) {
   });
 
   addSpeakButtons(wrapper, artistId, lineManifest);
-  return wrapper.innerHTML;
+  return wrapper;
 }
 
 function showHome() {
@@ -379,13 +388,26 @@ async function openEntry(filePath) {
     const md = stripFrontmatter(await res.text());
     if (typeof marked === 'undefined') throw new Error('marked not loaded');
     const lineManifest = entry ? await fetchLineManifest(entry.date) : null;
-    body.innerHTML = enhanceMarkdown(marked.parse(md), entry?.artist || '', lineManifest);
+    currentLineManifest = lineManifest;
+    body.replaceChildren(enhanceMarkdown(marked.parse(md), entry?.artist || '', lineManifest));
   } catch (err) {
     body.innerHTML = `<p class="error-state">内容加载失败（${err.message}），请刷新后重试。</p>`;
   }
 }
 
 document.getElementById('back-btn').addEventListener('click', showHome);
+document.getElementById('lesson-body').addEventListener('click', e => {
+  const btn = e.target.closest('.speak-btn');
+  if (!btn) return;
+  e.preventDefault();
+  const index = Number(btn.dataset.index);
+  const lineInfo = currentLineManifest?.lines?.[index];
+  const card = btn.closest('.lyric-card');
+  const text = lineInfo?.text || (card ? extractEnglishLine(card) : '');
+  const lang = currentLineManifest?.artist === 'sampha' ? 'en-GB' : 'en-US';
+  const mp3Url = lineInfo?.url || '';
+  playLyricLine(text, lang, mp3Url, btn);
+});
 document.getElementById('artist-filter').addEventListener('change', e => {
   renderHistory(e.target.value, document.getElementById('search-input').value);
 });
