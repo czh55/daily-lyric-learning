@@ -23,10 +23,13 @@ if str(ROOT) not in sys.path:
 
 DOCS = ROOT / "docs"
 AUDIO_DIR = DOCS / "audio"
+LINES_DIR = AUDIO_DIR / "lines"
 LESSONS = DOCS / "assets" / "lessons"
 DATA = ROOT / "data"
 
 DEFAULT_VOICE = "zh-CN-XiaoxiaoNeural"
+EN_VOICE_US = "en-US-JennyNeural"
+EN_VOICE_GB = "en-GB-SoniaNeural"
 MAX_CHUNK_LEN = 2000
 
 SECTION_ORDER = [
@@ -86,6 +89,83 @@ def parse_lesson_sections(md: str) -> dict[str, str]:
     if current is not None:
         sections[current] = "\n".join(buf).strip()
     return sections
+
+
+def extract_all_lyric_lines(lesson_md: str) -> list[str]:
+    """提取逐句精讲中全部英文原句"""
+    sections = parse_lesson_sections(lesson_md)
+    section = sections.get("二、逐句精讲", "")
+    lines: list[str] = []
+    for match in re.finditer(r"\*\*▸ 原句\*\*[：:]\s*(.+)", section):
+        text = strip_markdown(match.group(1))
+        if text:
+            lines.append(text)
+    return lines
+
+
+def line_voice_for_artist(artist_id: str) -> str:
+    return EN_VOICE_GB if artist_id == "sampha" else EN_VOICE_US
+
+
+async def _generate_line_mp3(text: str, output: Path, voice: str) -> bool:
+    try:
+        await _synthesize_chunk(text, output, voice)
+        return output.exists()
+    except Exception:
+        return False
+
+
+async def _generate_lines_async(
+    lines: list[str], date_str: str, voice: str
+) -> list[dict]:
+    LINES_DIR.mkdir(parents=True, exist_ok=True)
+    manifest: list[dict] = []
+
+    async def one(i: int, text: str) -> dict | None:
+        out = LINES_DIR / f"{date_str}-{i}.mp3"
+        ok = await _generate_line_mp3(text, out, voice)
+        if ok:
+            return {"index": i, "text": text, "url": f"audio/lines/{date_str}-{i}.mp3"}
+        return None
+
+    results = await asyncio.gather(*(one(i, t) for i, t in enumerate(lines)))
+    return [r for r in results if r]
+
+
+def generate_line_audio(meta: dict, lesson_md: str, date_str: str) -> bool:
+    """为逐句精讲中的英文原句生成朗读 MP3"""
+    lines = extract_all_lyric_lines(lesson_md)
+    if not lines:
+        return False
+
+    voice = line_voice_for_artist(meta.get("artist", ""))
+    try:
+        manifest_lines = asyncio.run(_generate_lines_async(lines, date_str, voice))
+        if not manifest_lines:
+            print(f"⚠ 歌词朗读生成失败：{date_str}")
+            return False
+
+        manifest_path = LINES_DIR / f"{date_str}.json"
+        import json
+
+        manifest_path.write_text(
+            json.dumps(
+                {
+                    "date": date_str,
+                    "artist": meta.get("artist", ""),
+                    "lines": manifest_lines,
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        print(f"✓ 已生成 {len(manifest_lines)} 条歌词朗读 docs/audio/lines/{date_str}.json")
+        return True
+    except Exception as e:
+        print(f"⚠ 歌词朗读生成失败: {e}")
+        return False
 
 
 def extract_lyric_highlights(section_text: str, limit: int = 3) -> list[str]:
@@ -288,20 +368,22 @@ def generate_audio(
     date_str: str,
     voice: str = DEFAULT_VOICE,
 ) -> bool:
-    """生成指定日期的语音讲解，返回是否成功"""
+    """生成指定日期的语音讲解与歌词朗读，返回是否成功"""
     script = build_narration_script(meta, lesson_md)
     output_mp3 = AUDIO_DIR / f"{date_str}.mp3"
     output_txt = AUDIO_DIR / f"{date_str}.txt"
 
+    ok = False
     try:
         ok = asyncio.run(synthesize_speech(script, output_mp3, voice))
         if ok:
             output_txt.write_text(script, encoding="utf-8")
             print(f"✓ 已生成语音讲解 docs/audio/{date_str}.mp3")
-        return ok
     except Exception as e:
-        print(f"⚠ 语音生成失败: {e}")
-        return False
+        print(f"⚠ 语音讲解生成失败: {e}")
+
+    line_ok = generate_line_audio(meta, lesson_md, date_str)
+    return ok or line_ok
 
 
 def audio_exists(date_str: str) -> bool:
@@ -383,11 +465,13 @@ def main() -> None:
     parser.add_argument("--all", action="store_true", help="为全部历史记录生成音频")
     parser.add_argument("--voice", type=str, default=DEFAULT_VOICE, help="TTS 语音")
     parser.add_argument("--print-script", action="store_true", help="只打印旁白稿，不生成音频")
+    parser.add_argument("--lines-only", action="store_true", help="仅生成歌词朗读 MP3")
     args = parser.parse_args()
 
     if args.all:
         entries = load_history_entries()
         ok_count = 0
+        line_count = 0
         for entry in entries:
             if args.print_script:
                 lesson_path = find_lesson_path(entry)
@@ -395,9 +479,20 @@ def main() -> None:
                     print(build_narration_script(entry, lesson_path.read_text(encoding="utf-8")))
                     print("\n" + "=" * 40 + "\n")
                 continue
-            if generate_audio_for_entry(entry, voice=args.voice):
+            lesson_path = find_lesson_path(entry)
+            if not lesson_path:
+                continue
+            lesson_md = lesson_path.read_text(encoding="utf-8")
+            date_str = entry.get("date", "")
+            if args.lines_only:
+                if generate_line_audio(entry, lesson_md, date_str):
+                    line_count += 1
+                continue
+            if generate_audio(entry, lesson_md, date_str, voice=args.voice):
                 ok_count += 1
-        if not args.print_script:
+        if args.lines_only:
+            print(f"✓ 完成 {line_count}/{len(entries)} 条歌词朗读")
+        elif not args.print_script:
             print(f"✓ 完成 {ok_count}/{len(entries)} 条语音讲解")
         return
 

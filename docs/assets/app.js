@@ -14,6 +14,8 @@ const ARTIST_NAMES = {
 let history = [];
 let artists = [];
 let songs = [];
+let cachedVoices = [];
+let lineAudioPlayer = null;
 
 function resolveUrl(path) {
   return new URL(path, window.location.href).href;
@@ -184,39 +186,129 @@ function setSpeed(dateStr, rate) {
 }
 
 function extractEnglishLine(cardEl) {
-  const strong = cardEl.querySelector('strong');
-  if (!strong || !strong.textContent.includes('原句')) return '';
-  const text = cardEl.textContent.replace(/^▸\s*原句[：:]\s*/u, '').split('中文释义')[0].trim();
+  const clone = cardEl.cloneNode(true);
+  clone.querySelectorAll('.speak-btn').forEach(el => el.remove());
+  let text = (clone.textContent || '')
+    .replace(/^▸\s*原句\s*[：:]\s*/u, '')
+    .split(/中文释义/u)[0]
+    .trim();
   return text.replace(/\s+/g, ' ').trim();
 }
 
-function speakEnglish(text, lang = 'en-US') {
-  if (!text || !window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = lang;
-  utterance.rate = 0.9;
-  const voices = window.speechSynthesis.getVoices();
-  const preferred = voices.find(v => v.lang.startsWith(lang.split('-')[0]) && v.lang.includes(lang.split('-')[1] || ''));
-  if (preferred) utterance.voice = preferred;
-  window.speechSynthesis.speak(utterance);
+function loadSpeechVoices() {
+  return new Promise(resolve => {
+    if (!window.speechSynthesis) {
+      resolve([]);
+      return;
+    }
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length) {
+      cachedVoices = voices;
+      resolve(voices);
+      return;
+    }
+    window.speechSynthesis.addEventListener('voiceschanged', () => {
+      cachedVoices = window.speechSynthesis.getVoices();
+      resolve(cachedVoices);
+    }, { once: true });
+    setTimeout(() => {
+      cachedVoices = window.speechSynthesis.getVoices();
+      resolve(cachedVoices);
+    }, 300);
+  });
 }
 
-function addSpeakButtons(wrapper, artistId) {
+function pickSpeechVoice(lang) {
+  const [language, region] = lang.split('-');
+  return cachedVoices.find(v => v.lang === lang)
+    || cachedVoices.find(v => v.lang.startsWith(`${language}-`) && (!region || v.lang.includes(region)))
+    || cachedVoices.find(v => v.lang.startsWith(language))
+    || null;
+}
+
+function speakEnglish(text, lang = 'en-US') {
+  if (!text || !window.speechSynthesis) return Promise.resolve(false);
+  return loadSpeechVoices().then(() => new Promise(resolve => {
+    const synth = window.speechSynthesis;
+    synth.cancel();
+    setTimeout(() => {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = lang;
+      utterance.rate = 0.88;
+      const voice = pickSpeechVoice(lang);
+      if (voice) utterance.voice = voice;
+      utterance.onend = () => resolve(true);
+      utterance.onerror = () => resolve(false);
+      synth.speak(utterance);
+    }, 50);
+  }));
+}
+
+async function fetchLineManifest(dateStr) {
+  try {
+    const res = await fetch(resolveUrl(`audio/lines/${dateStr}.json`));
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
+function playLineAudio(url, btn) {
+  if (!url) return Promise.resolve(false);
+  if (lineAudioPlayer) {
+    lineAudioPlayer.pause();
+    lineAudioPlayer = null;
+  }
+  document.querySelectorAll('.speak-btn.playing').forEach(el => el.classList.remove('playing'));
+  lineAudioPlayer = new Audio(resolveUrl(url));
+  if (btn) btn.classList.add('playing');
+  return lineAudioPlayer.play()
+    .then(() => new Promise(resolve => {
+      lineAudioPlayer.onended = () => {
+        if (btn) btn.classList.remove('playing');
+        lineAudioPlayer = null;
+        resolve(true);
+      };
+      lineAudioPlayer.onerror = () => {
+        if (btn) btn.classList.remove('playing');
+        lineAudioPlayer = null;
+        resolve(false);
+      };
+    }))
+    .catch(() => {
+      if (btn) btn.classList.remove('playing');
+      lineAudioPlayer = null;
+      return false;
+    });
+}
+
+async function playLyricLine(text, lang, mp3Url, btn) {
+  if (mp3Url) {
+    const ok = await playLineAudio(mp3Url, btn);
+    if (ok) return;
+  }
+  await speakEnglish(text, lang);
+}
+
+function addSpeakButtons(wrapper, artistId, lineManifest = null) {
   const lang = artistId === 'sampha' ? 'en-GB' : 'en-US';
-  wrapper.querySelectorAll('.lyric-card').forEach(card => {
+  const manifestLines = lineManifest?.lines || [];
+  wrapper.querySelectorAll('.lyric-card').forEach((card, index) => {
     const line = extractEnglishLine(card);
     if (!line) return;
+    const mp3Url = manifestLines[index]?.url || '';
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'speak-btn';
     btn.setAttribute('aria-label', '朗读原句');
     btn.textContent = '🔊 朗读';
-    btn.addEventListener('click', () => speakEnglish(line, lang));
+    btn.addEventListener('click', () => playLyricLine(line, lang, mp3Url, btn));
     card.appendChild(btn);
   });
 }
-function enhanceMarkdown(html, artistId = '') {
+
+function enhanceMarkdown(html, artistId = '', lineManifest = null) {
   const wrapper = document.createElement('div');
   wrapper.innerHTML = html;
 
@@ -237,7 +329,7 @@ function enhanceMarkdown(html, artistId = '') {
   });
 
   wrapper.querySelectorAll('p').forEach(p => {
-    if (p.innerHTML.startsWith('<strong>▸ 原句</strong>')) {
+    if (p.innerHTML.includes('<strong>▸ 原句')) {
       const card = document.createElement('div');
       card.className = 'lyric-card';
       card.innerHTML = p.innerHTML;
@@ -245,7 +337,7 @@ function enhanceMarkdown(html, artistId = '') {
     }
   });
 
-  addSpeakButtons(wrapper, artistId);
+  addSpeakButtons(wrapper, artistId, lineManifest);
   return wrapper.innerHTML;
 }
 
@@ -286,7 +378,8 @@ async function openEntry(filePath) {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const md = stripFrontmatter(await res.text());
     if (typeof marked === 'undefined') throw new Error('marked not loaded');
-    body.innerHTML = enhanceMarkdown(marked.parse(md), entry?.artist || '');
+    const lineManifest = entry ? await fetchLineManifest(entry.date) : null;
+    body.innerHTML = enhanceMarkdown(marked.parse(md), entry?.artist || '', lineManifest);
   } catch (err) {
     body.innerHTML = `<p class="error-state">内容加载失败（${err.message}），请刷新后重试。</p>`;
   }
@@ -301,9 +394,7 @@ document.getElementById('search-input').addEventListener('input', e => {
 });
 
 async function init() {
-  if (window.speechSynthesis) {
-    window.speechSynthesis.getVoices();
-  }
+  await loadSpeechVoices();
   await loadData();
   renderStats();
   renderToday();

@@ -313,6 +313,11 @@ body {
 
 .speak-btn:active { opacity: 0.85; }
 
+.speak-btn.playing {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 /* Audio player */
 .audio-section {
   background: linear-gradient(135deg, rgba(124, 108, 240, 0.12), rgba(124, 108, 240, 0.04));
