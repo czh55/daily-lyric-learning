@@ -1,6 +1,14 @@
 {
   "entries": [
     {
+      "date": "2026-07-01",
+      "artist": "daniel-caesar",
+      "artistName": "Daniel Caesar",
+      "title": "Unconditional",
+      "slug": "daniel-caesar-unconditional",
+      "file": "assets/lessons/2026-07-01-daniel-caesar-unconditional.md"
+    },
+    {
       "date": "2026-06-30",
       "artist": "gallant",
       "artistName": "Gallant",
