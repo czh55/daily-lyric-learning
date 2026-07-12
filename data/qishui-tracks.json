@@ -46,5 +46,17 @@
         "verified_at": "2026-06-16"
       }
     }
+  },
+  "6732353649701308418": {
+    "albumName": "FREE 6LACK",
+    "artistName": "6LACK",
+    "tracks": {
+      "6lack-free": {
+        "track_id": "6732353650846353410",
+        "title": "Free",
+        "url": "https://music.douyin.com/qishui/share/track?track_id=6732353650846353410",
+        "verified_at": "2026-07-12"
+      }
+    }
   }
 }
