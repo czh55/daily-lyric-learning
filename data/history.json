@@ -1,6 +1,14 @@
 {
   "entries": [
     {
+      "date": "2026-07-13",
+      "artist": "frank-ocean",
+      "artistName": "Frank Ocean",
+      "title": "Ivy",
+      "slug": "frank-ocean-ivy",
+      "file": "assets/lessons/2026-07-13-frank-ocean-ivy.md"
+    },
+    {
       "date": "2026-07-12",
       "artist": "6lack",
       "artistName": "6LACK",
