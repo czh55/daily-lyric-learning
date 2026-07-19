@@ -1,6 +1,14 @@
 {
   "entries": [
     {
+      "date": "2026-07-19",
+      "artist": "frank-ocean",
+      "artistName": "Frank Ocean",
+      "title": "Pink + White",
+      "slug": "frank-ocean-pink-white",
+      "file": "assets/lessons/2026-07-19-frank-ocean-pink-white.md"
+    },
+    {
       "date": "2026-07-18",
       "artist": "gallant",
       "artistName": "Gallant",
