@@ -1,6 +1,14 @@
 {
   "entries": [
     {
+      "date": "2026-07-25",
+      "artist": "frank-ocean",
+      "artistName": "Frank Ocean",
+      "title": "Self Control",
+      "slug": "frank-ocean-self-control",
+      "file": "assets/lessons/2026-07-25-frank-ocean-self-control.md"
+    },
+    {
       "date": "2026-07-24",
       "artist": "her",
       "artistName": "H.E.R.",
