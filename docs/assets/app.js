@@ -14,9 +14,12 @@ const ARTIST_NAMES = {
 let history = [];
 let artists = [];
 let songs = [];
+let topics = [];
 let cachedVoices = [];
 let lineAudioPlayer = null;
 let currentLineManifest = null;
+let currentView = 'home'; // home | lesson | topic
+let topicReturnFile = null;
 
 function resolveUrl(path) {
   return new URL(path, window.location.href).href;
@@ -40,14 +43,66 @@ function getTodayStr() {
 }
 
 async function loadData() {
-  const [historyRes, artistsRes, songsRes] = await Promise.all([
+  const [historyRes, artistsRes, songsRes, topicsRes] = await Promise.all([
     fetch(resolveUrl('data/history.json')),
     fetch(resolveUrl('data/artists.json')),
-    fetch(resolveUrl('data/songs.json'))
+    fetch(resolveUrl('data/songs.json')),
+    fetch(resolveUrl('data/topics.json')).catch(() => null)
   ]);
   history = (await historyRes.json()).entries || [];
   artists = await artistsRes.json();
   songs = await songsRes.json();
+  if (topicsRes && topicsRes.ok) {
+    topics = await topicsRes.json();
+  } else {
+    topics = [];
+  }
+}
+
+function renderTopics() {
+  const grid = document.getElementById('topics-grid');
+  if (!grid) return;
+  if (!topics.length) {
+    grid.innerHTML = '';
+    return;
+  }
+
+  grid.innerHTML = `<div class="topics-list">${topics.map(topic => `
+    <button class="topic-card" type="button" data-file="${topic.file}">
+      <span class="topic-card-eyebrow">专题</span>
+      <span class="topic-card-title">${topic.title}</span>
+      <span class="topic-card-summary">${topic.summary || ''}</span>
+      ${topic.tags?.length ? `<span class="topic-card-tags">${topic.tags.map(t => `<span>${t}</span>`).join('')}</span>` : ''}
+    </button>
+  `).join('')}</div>`;
+
+  grid.querySelectorAll('.topic-card').forEach(btn => {
+    btn.addEventListener('click', () => openTopic(btn.dataset.file));
+  });
+}
+
+function parseLessonMetaFromPath(filePath) {
+  const name = (filePath || '').split('/').pop() || '';
+  const m = name.match(/^(\d{4}-\d{2}-\d{2})-(.+)\.md$/);
+  if (!m) return null;
+  const [, date, slug] = m;
+  const song = songs.find(s => s.slug === slug);
+  const knownArtist = Object.keys(ARTIST_NAMES)
+    .sort((a, b) => b.length - a.length)
+    .find(id => slug === id || slug.startsWith(`${id}-`)) || slug.split('-')[0];
+  const titleFromSlug = slug
+    .slice(knownArtist.length + 1)
+    .split('-')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+  return {
+    date,
+    slug,
+    title: song?.title || titleFromSlug || slug,
+    artist: knownArtist,
+    artistName: ARTIST_NAMES[knownArtist] || knownArtist,
+    file: filePath
+  };
 }
 
 function renderStats() {
@@ -346,11 +401,20 @@ function enhanceMarkdown(html, artistId = '', lineManifest = null) {
     }
   });
 
+  wrapper.querySelectorAll('a[href^="lesson:"]').forEach(a => {
+    const filePath = a.getAttribute('href').slice('lesson:'.length);
+    a.href = '#';
+    a.classList.add('lesson-link');
+    a.dataset.file = filePath;
+  });
+
   addSpeakButtons(wrapper, artistId, lineManifest);
   return wrapper;
 }
 
 function showHome() {
+  currentView = 'home';
+  topicReturnFile = null;
   document.getElementById('home-view').classList.remove('hidden');
   document.getElementById('lesson-view').classList.add('hidden');
   document.getElementById('lesson-view').setAttribute('aria-hidden', 'true');
@@ -364,16 +428,45 @@ function showLesson() {
   window.scrollTo({ top: 0 });
 }
 
-async function openEntry(filePath) {
-  const entry = history.find(e => e.file === filePath);
+async function openTopic(filePath) {
+  const topic = topics.find(t => t.file === filePath);
   const meta = document.getElementById('lesson-meta');
   const body = document.getElementById('lesson-body');
+  currentView = 'topic';
+  topicReturnFile = filePath;
+
+  meta.innerHTML = `
+    <h2>${topic?.title || '专题'}</h2>
+    <p>${topic?.summary || '听歌理解专题'}</p>`;
+
+  body.innerHTML = '<p class="loading">加载内容…</p>';
+  showLesson();
+  updateBackButtonLabel();
+
+  try {
+    const res = await fetch(resolveUrl(filePath));
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const md = stripFrontmatter(await res.text());
+    if (typeof marked === 'undefined') throw new Error('marked not loaded');
+    currentLineManifest = null;
+    body.replaceChildren(enhanceMarkdown(marked.parse(md)));
+  } catch (err) {
+    body.innerHTML = `<p class="error-state">内容加载失败（${err.message}），请刷新后重试。</p>`;
+  }
+}
+
+async function openEntry(filePath, { fromTopic = false } = {}) {
+  const entry = history.find(e => e.file === filePath) || parseLessonMetaFromPath(filePath);
+  const meta = document.getElementById('lesson-meta');
+  const body = document.getElementById('lesson-body');
+  currentView = 'lesson';
+  if (!fromTopic) topicReturnFile = null;
 
   if (entry) {
-    const hasAudio = await audioExistsForDate(entry.date);
+    const hasAudio = entry.date ? await audioExistsForDate(entry.date) : false;
     meta.innerHTML = `
       <h2>${entry.title}</h2>
-      <p>${entry.artistName || ARTIST_NAMES[entry.artist]} · ${formatDate(entry.date)}</p>
+      <p>${entry.artistName || ARTIST_NAMES[entry.artist] || ''} · ${entry.date ? formatDate(entry.date) : ''}</p>
       ${hasAudio ? renderAudioPlayer(entry.date) : ''}`;
   } else {
     meta.innerHTML = '';
@@ -381,13 +474,14 @@ async function openEntry(filePath) {
 
   body.innerHTML = '<p class="loading">加载内容…</p>';
   showLesson();
+  updateBackButtonLabel();
 
   try {
     const res = await fetch(resolveUrl(filePath));
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const md = stripFrontmatter(await res.text());
     if (typeof marked === 'undefined') throw new Error('marked not loaded');
-    const lineManifest = entry ? await fetchLineManifest(entry.date) : null;
+    const lineManifest = entry?.date ? await fetchLineManifest(entry.date) : null;
     currentLineManifest = lineManifest;
     body.replaceChildren(enhanceMarkdown(marked.parse(md), entry?.artist || '', lineManifest));
   } catch (err) {
@@ -395,8 +489,33 @@ async function openEntry(filePath) {
   }
 }
 
-document.getElementById('back-btn').addEventListener('click', showHome);
+document.getElementById('back-btn').addEventListener('click', () => {
+  if (currentView === 'lesson' && topicReturnFile) {
+    openTopic(topicReturnFile);
+    return;
+  }
+  showHome();
+});
+
+function updateBackButtonLabel() {
+  const btn = document.getElementById('back-btn');
+  if (!btn) return;
+  if (currentView === 'lesson' && topicReturnFile) {
+    btn.textContent = '← 返回专题';
+  } else if (currentView === 'topic') {
+    btn.textContent = '← 返回列表';
+  } else {
+    btn.textContent = '← 返回列表';
+  }
+}
 document.getElementById('lesson-body').addEventListener('click', e => {
+  const lessonLink = e.target.closest('a.lesson-link');
+  if (lessonLink) {
+    e.preventDefault();
+    const file = lessonLink.dataset.file;
+    if (file) openEntry(file, { fromTopic: currentView === 'topic' || !!topicReturnFile });
+    return;
+  }
   const btn = e.target.closest('.speak-btn');
   if (!btn) return;
   e.preventDefault();
@@ -420,6 +539,7 @@ async function init() {
   await loadData();
   renderStats();
   renderToday();
+  renderTopics();
   populateArtistFilter();
   renderHistory();
 
@@ -427,6 +547,8 @@ async function init() {
   const todayEntry = history.find(e => e.date === today);
   if (todayEntry && window.location.hash === '#today') {
     openEntry(todayEntry.file);
+  } else if (window.location.hash === '#topic' && topics[0]) {
+    openTopic(topics[0].file);
   }
 }
 

@@ -157,7 +157,7 @@ def lesson_has_body(path: Path) -> bool:
 def sync_docs_data() -> None:
     """将 data/ 同步到 docs/data/，供 GitHub Pages 静态访问。"""
     DOCS_DATA.mkdir(parents=True, exist_ok=True)
-    for name in ("history.json", "artists.json", "songs.json"):
+    for name in ("history.json", "artists.json", "songs.json", "topics.json"):
         src = DATA / name
         if src.exists():
             shutil.copy2(src, DOCS_DATA / name)

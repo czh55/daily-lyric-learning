@@ -126,6 +126,93 @@ body {
 
 .btn-primary:active { opacity: 0.85; }
 
+/* Topics */
+.topics-section {
+  margin-bottom: 1.5rem;
+}
+
+.topics-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.topic-card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: linear-gradient(135deg, rgba(124, 108, 240, 0.14), rgba(124, 108, 240, 0.04));
+  border: 1px solid rgba(124, 108, 240, 0.35);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+  color: var(--text);
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.topic-card:active { opacity: 0.9; }
+
+.topic-card-eyebrow {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--accent);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.topic-card-title {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-top: 0.25rem;
+  line-height: 1.35;
+}
+
+.topic-card-summary {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 0.4rem;
+  line-height: 1.5;
+}
+
+.topic-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+}
+
+.topic-card-tags span {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 0.12rem 0.45rem;
+  border-radius: 4px;
+}
+
+.markdown-body a.lesson-link {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(124, 108, 240, 0.45);
+  cursor: pointer;
+}
+
+.markdown-body a.lesson-link:hover {
+  border-bottom-color: var(--accent);
+}
+
+.markdown-body blockquote {
+  font-style: normal;
+}
+
+.markdown-body blockquote p {
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
 /* Filters */
 .filters {
   display: grid;
