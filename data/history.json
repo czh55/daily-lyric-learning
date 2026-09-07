@@ -1,6 +1,14 @@
 {
   "entries": [
     {
+      "date": "2026-09-07",
+      "artist": "frank-ocean",
+      "artistName": "Frank Ocean",
+      "title": "Pink + White",
+      "slug": "frank-ocean-pink-white",
+      "file": "assets/lessons/2026-09-07-frank-ocean-pink-white.md"
+    },
+    {
       "date": "2026-09-06",
       "artist": "daniel-caesar",
       "artistName": "Daniel Caesar",
