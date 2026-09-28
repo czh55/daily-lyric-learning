@@ -305,7 +305,7 @@ slug: sampha-under
 
 **下一首：Sampha — Blood on Me**
 
-**理由**：两首同属 debut 专辑 *Process* 的「液体 + 身体」隐喻线——《Under》是第 6 轨，以钢琴与电视意象写 **under your spell** 的被动沉溺；《Blood on Me》是第 2 轨，以更快 BPM 与 guilt 叙事写「血在我身上、却像溺水」的主动创伤。如果说《Under》的 waves 是关系浪、《go under` 是失去控制，《Blood on Me》把 shame 与 blood/water 推得更极端，是 *Process* 情感序曲里更早、更烈的一极。第二轮循环中《Blood on Me》尚未学习；且你已学完《(No One Knows Me) Like the Piano》《Spirit 2.0》《Only》《Under》，只差这一首即可完成 Sampha 曲库第二轮闭环。学完《Under》的 spell 与 screen 隐喻后，《Blood on Me》带你回到 album 开篇的 raw guilt 与释放。
+**理由**：两首同属 debut 专辑 *Process* 的「液体 + 身体」隐喻线——《Under》是第 6 轨，以钢琴与电视意象写 **under your spell** 的被动沉溺；《Blood on Me》是第 2 轨，以更快 BPM 与 guilt 叙事写「血在我身上、却像溺水」的主动创伤。如果说《Under》的 waves 是关系浪、**go under** 是失去控制，《Blood on Me》把 shame 与 blood/water 推得更极端，是 *Process* 情感序曲里更早、更烈的一极。第二轮循环中《Blood on Me》尚未学习；且你已学完《(No One Knows Me) Like the Piano》《Spirit 2.0》《Only》《Under》，只差这一首即可完成 Sampha 曲库第二轮闭环。学完《Under》的 spell 与 screen 隐喻后，《Blood on Me》带你回到 album 开篇的 raw guilt 与释放。
 
 ---
 
