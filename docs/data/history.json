@@ -1,6 +1,14 @@
 {
   "entries": [
     {
+      "date": "2026-10-01",
+      "artist": "frank-ocean",
+      "artistName": "Frank Ocean",
+      "title": "Nights",
+      "slug": "frank-ocean-nights",
+      "file": "assets/lessons/2026-10-01-frank-ocean-nights.md"
+    },
+    {
       "date": "2026-09-30",
       "artist": "her",
       "artistName": "H.E.R.",
