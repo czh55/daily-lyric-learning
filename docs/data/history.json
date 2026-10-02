@@ -1,6 +1,14 @@
 {
   "entries": [
     {
+      "date": "2026-10-02",
+      "artist": "gallant",
+      "artistName": "Gallant",
+      "title": "Bourbon",
+      "slug": "gallant-bourbon",
+      "file": "assets/lessons/2026-10-02-gallant-bourbon.md"
+    },
+    {
       "date": "2026-10-01",
       "artist": "frank-ocean",
       "artistName": "Frank Ocean",
