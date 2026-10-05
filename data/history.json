@@ -1,6 +1,14 @@
 {
   "entries": [
     {
+      "date": "2026-10-05",
+      "artist": "frank-ocean",
+      "artistName": "Frank Ocean",
+      "title": "Ivy",
+      "slug": "frank-ocean-ivy",
+      "file": "assets/lessons/2026-10-05-frank-ocean-ivy.md"
+    },
+    {
       "date": "2026-10-04",
       "artist": "bryson-tiller",
       "artistName": "Bryson Tiller",
