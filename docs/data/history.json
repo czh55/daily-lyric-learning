@@ -1,6 +1,14 @@
 {
   "entries": [
     {
+      "date": "2026-10-06",
+      "artist": "gallant",
+      "artistName": "Gallant",
+      "title": "Chandra",
+      "slug": "gallant-chandra",
+      "file": "assets/lessons/2026-10-06-gallant-chandra.md"
+    },
+    {
       "date": "2026-10-05",
       "artist": "frank-ocean",
       "artistName": "Frank Ocean",
