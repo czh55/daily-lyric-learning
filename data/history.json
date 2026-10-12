@@ -1,6 +1,14 @@
 {
   "entries": [
     {
+      "date": "2026-10-12",
+      "artist": "gallant",
+      "artistName": "Gallant",
+      "title": "Doesn't Matter",
+      "slug": "gallant-doesnt-matter",
+      "file": "assets/lessons/2026-10-12-gallant-doesnt-matter.md"
+    },
+    {
       "date": "2026-10-11",
       "artist": "emotional-oranges",
       "artistName": "Emotional Oranges",
