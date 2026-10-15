@@ -1,6 +1,14 @@
 {
   "entries": [
     {
+      "date": "2026-10-15",
+      "artist": "frank-ocean",
+      "artistName": "Frank Ocean",
+      "title": "Pink + White",
+      "slug": "frank-ocean-pink-white",
+      "file": "assets/lessons/2026-10-15-frank-ocean-pink-white.md"
+    },
+    {
       "date": "2026-10-14",
       "artist": "jhene-aiko",
       "artistName": "Jhené Aiko",
