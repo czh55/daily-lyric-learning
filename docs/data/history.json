@@ -1,6 +1,14 @@
 {
   "entries": [
     {
+      "date": "2026-10-25",
+      "artist": "daniel-caesar",
+      "artistName": "Daniel Caesar",
+      "title": "Best Part",
+      "slug": "daniel-caesar-best-part",
+      "file": "assets/lessons/2026-10-25-daniel-caesar-best-part.md"
+    },
+    {
       "date": "2026-10-24",
       "artist": "her",
       "artistName": "H.E.R.",
