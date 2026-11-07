@@ -1,6 +1,14 @@
 {
   "entries": [
     {
+      "date": "2026-11-07",
+      "artist": "gallant",
+      "artistName": "Gallant",
+      "title": "Bourbon",
+      "slug": "gallant-bourbon",
+      "file": "assets/lessons/2026-11-07-gallant-bourbon.md"
+    },
+    {
       "date": "2026-11-06",
       "artist": "dvsn",
       "artistName": "dvsn",
